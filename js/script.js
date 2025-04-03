@@ -3,41 +3,34 @@ document.addEventListener("DOMContentLoaded", function () {
     const videoModal = new bootstrap.Modal(videoModalElement);
     const videoPlayer = document.getElementById('videoPlayer');
     const modalBody = document.querySelector('.modal-body');
-    const videoThumbnails = document.querySelectorAll('.video-thumbnail');
+    const playIcons = document.querySelectorAll('.play-icon'); // Target play icons instead
 
-    videoThumbnails.forEach(thumbnail => {
-        // Add click and touch event for mobile compatibility
-        thumbnail.addEventListener('click', handleVideoClick);
-        thumbnail.addEventListener('touchstart', handleVideoClick); // For mobile touch
+    playIcons.forEach(icon => {
+        icon.addEventListener('click', handleVideoClick);
+        icon.addEventListener('touchstart', handleVideoClick); // For mobile touch
 
         function handleVideoClick(event) {
             event.preventDefault(); // Prevent default touch behavior
-            const videoUrl = this.getAttribute('data-video-src');
-            const videoTitle = this.parentElement.querySelector('.video-title').textContent;
+            const thumbnail = this.closest('.video-thumbnail'); // Find parent thumbnail
+            const videoUrl = thumbnail.getAttribute('data-video-src');
+            const videoTitle = thumbnail.parentElement.querySelector('.video-title').textContent;
 
-            // Set modal title
             document.querySelector('.modal-title').textContent = videoTitle;
-
-            // Reset video player
             videoPlayer.pause();
             videoPlayer.currentTime = 0;
             videoPlayer.innerHTML = '';
             videoPlayer.style.display = 'block';
 
-            // Hide error message
             const errorElement = document.getElementById('videoError');
             errorElement.style.display = 'none';
 
-            // Add video source
             const source = document.createElement('source');
-            source.src = `${videoUrl}?t=${Date.now()}`; // Cache-busting
+            source.src = `${videoUrl}?t=${Date.now()}`;
             source.type = 'video/mp4';
             videoPlayer.appendChild(source);
 
-            // Show modal
             videoModal.show();
 
-            // Handle video ready state
             videoPlayer.onloadedmetadata = () => {
                 videoPlayer.play().catch(error => {
                     console.log("Autoplay prevented:", error);
@@ -60,25 +53,23 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             };
 
-            // Handle errors
             videoPlayer.onerror = () => {
                 errorElement.textContent = "Failed to load video.";
                 errorElement.style.display = 'block';
             };
 
-            // Start loading the video
             videoPlayer.load();
         }
     });
 
-    // Handle video click to hide controls during playback
+    // Hide controls on video click during playback
     videoPlayer.addEventListener('click', function () {
         if (!videoPlayer.paused && videoPlayer.controls) {
-            videoPlayer.controls = false; // Hide controls if playing and clicked
+            videoPlayer.controls = false;
         }
     });
 
-    // Reset video player and shift focus when modal closes
+    // Reset and manage focus when modal closes
     videoModalElement.addEventListener('hidden.bs.modal', function () {
         videoPlayer.pause();
         videoPlayer.currentTime = 0;
@@ -88,7 +79,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const errorElement = document.getElementById('videoError');
         errorElement.style.display = 'none';
 
-        // Shift focus back to body to fix ARIA issue
-        document.body.focus();
+        const firstThumbnail = document.querySelector('.video-thumbnail');
+        if (firstThumbnail) {
+            firstThumbnail.focus();
+        } else {
+            document.body.focus();
+        }
     });
 });
